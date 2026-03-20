@@ -184,9 +184,3 @@ order_items   item_id, order_id, product_id, quantity, unit_price, line_total
 returns       return_id, order_id, return_date, reason, refund_amount
 ```
 
----
-
-## Extensions
-
-Possible next steps: migrate gold to dbt models, swap synthetic data for a real dataset
-(e.g. Kaggle's Brazilian e-commerce), or add a Streamlit dashboard over the gold CSVs.
