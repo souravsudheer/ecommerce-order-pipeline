@@ -1,0 +1,44 @@
+# Generated data — run pipeline/run_all.py to reproduce
+data/raw/
+data/bronze/
+data/silver/
+data/gold/
+data/quality_report.csv
+
+# DuckDB files
+*.duckdb
+*.duckdb.wal
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Environment files
+.env
+*.env
+
+# pytest cache
+.pytest_cache/
+
+# Keep folder structure visible in repo
+!data/raw/.gitkeep
+!data/bronze/.gitkeep
+!data/silver/.gitkeep
+!data/gold/.gitkeep

@@ -1,0 +1,38 @@
+name: Pipeline Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate synthetic data
+        run: python pipeline/generate_data.py
+
+      - name: Run bronze layer
+        run: python pipeline/bronze.py
+
+      - name: Run silver layer
+        run: python pipeline/silver.py
+
+      - name: Run gold layer
+        run: python pipeline/gold.py
+
+      - name: Run pytest
+        run: pytest tests/ -v --tb=short
