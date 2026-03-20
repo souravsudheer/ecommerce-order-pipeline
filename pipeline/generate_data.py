@@ -5,10 +5,6 @@ as CSVs to data/raw/. Deliberately injects ~5% bad records so the
 data quality framework has real issues to catch.
 """
 
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import numpy as np
 import pandas as pd
 from faker import Faker

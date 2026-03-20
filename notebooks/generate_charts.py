@@ -5,9 +5,7 @@ Run this from the project root: python notebooks/generate_charts.py
 Charts are saved to notebooks/charts/ for use in the notebook and README.
 """
 
-import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 import matplotlib.pyplot as plt

@@ -1,2 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ecommerce-order-pipeline"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "duckdb==1.5.0",
+    "faker==24.0.0",
+    "numpy==1.26.4",
+    "pandas==2.2.1",
+    "matplotlib==3.8.3",
+    "pytest==8.1.0",
+    "jupyter==1.0.0",
+    "nbformat==5.10.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools]
+py-modules = ["config"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]

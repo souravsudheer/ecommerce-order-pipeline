@@ -1,7 +1,3 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import duckdb
 from config import RAW_DIR, BRONZE_DIR
 

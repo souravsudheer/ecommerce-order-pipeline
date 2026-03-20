@@ -1,7 +1,3 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import duckdb
 import pandas as pd
 from config import BRONZE_DIR, SILVER_DIR
@@ -17,14 +13,8 @@ def attach_bronze(conn: duckdb.DuckDBPyConnection) -> None:
     conn.execute(f"ATTACH '{bronze_path}' AS bronze (READ_ONLY)")
 
 
+# Drop null IDs and malformed emails, cast types, lowercase email
 def transform_customers(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    - Cast customer_id to integer
-    - Lowercase and strip whitespace from email
-    - Cast signup_date to date
-    - Drop rows with null customer_id or null email
-    - Drop rows where email does not contain '@' (malformed)
-    """
     df = conn.execute("""
         SELECT
             CAST(customer_id AS INTEGER)    AS customer_id,
@@ -40,13 +30,8 @@ def transform_customers(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     return df
 
 
+# Fix negative prices with abs(), flag them, drop null product_ids
 def transform_products(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    - Cast product_id to integer
-    - Cast price to decimal, take absolute value to fix negatives
-    - Drop rows with null product_id
-    - Flag rows with originally negative price (kept but corrected)
-    """
     df = conn.execute("""
         SELECT
             CAST(product_id AS INTEGER)         AS product_id,
@@ -62,14 +47,8 @@ def transform_products(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     return df
 
 
+# Inner join drops orders with invalid customer_ids; cancelled orders stay until gold
 def transform_orders(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    - Cast order_id and customer_id to integer
-    - Cast order_date to date, total_amount to decimal
-    - Drop rows with null order_id
-    - Drop rows whose customer_id was removed during customer cleaning
-    - Cancelled orders stay in silver; excluded at gold layer
-    """
     df = conn.execute("""
         SELECT
             CAST(o.order_id AS INTEGER)           AS order_id,
@@ -85,14 +64,8 @@ def transform_orders(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     return df
 
 
+# Drop negative/zero quantities, orphaned order_ids, derive line_total
 def transform_order_items(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    - Cast all IDs to integer, unit_price to decimal
-    - Drop rows with null order_id or product_id
-    - Drop rows with negative or zero quantity (bad data)
-    - Drop rows whose order_id was removed during order cleaning
-    - Compute line_total as a derived column
-    """
     df = conn.execute("""
         SELECT
             CAST(oi.item_id AS INTEGER)                AS item_id,
@@ -112,12 +85,8 @@ def transform_order_items(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     return df
 
 
+# Drop returns before their order date (temporal violation) and orphaned order_ids
 def transform_returns(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    - Cast all IDs to integer, return_date to date, refund_amount to decimal
-    - Drop rows with null order_id or order_id removed during order cleaning
-    - Drop rows where return_date is before the linked order_date (temporal integrity)
-    """
     df = conn.execute("""
         SELECT
             CAST(r.return_id AS INTEGER)            AS return_id,

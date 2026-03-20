@@ -99,7 +99,7 @@ High LTV is roughly 3x Low. Retention budget should skew toward the top two tier
 git clone https://github.com/souravsudheer/ecommerce-order-pipeline
 cd ecommerce-order-pipeline
 python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+pip install -e .
 python pipeline/run_all.py
 ```
 
@@ -151,7 +151,6 @@ ecommerce-order-pipeline/
 │
 ├── config.py                 # All paths and constants in one place
 ├── pyproject.toml
-├── requirements.txt
 └── README.md
 ```
 

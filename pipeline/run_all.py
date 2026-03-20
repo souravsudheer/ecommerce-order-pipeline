@@ -1,7 +1,4 @@
-import sys
 import time
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from pipeline.generate_data import main as generate
 from pipeline.bronze import main as bronze
