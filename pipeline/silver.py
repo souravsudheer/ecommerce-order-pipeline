@@ -1,10 +1,3 @@
-"""
-silver.py
-Cleans, types, and filters bronze data into trusted silver tables.
-Each table gets explicit type casting, null removal, and business
-rule filtering. Outputs are written as CSVs and as DuckDB views.
-"""
-
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -15,20 +8,17 @@ from config import BRONZE_DIR, SILVER_DIR
 
 
 def get_connection() -> duckdb.DuckDBPyConnection:
-    """Returns a DuckDB connection to the silver database."""
     SILVER_DIR.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(str(SILVER_DIR / "silver.duckdb"))
 
 
 def attach_bronze(conn: duckdb.DuckDBPyConnection) -> None:
-    """Attaches the bronze database so silver can read from it."""
     bronze_path = str(BRONZE_DIR / "bronze.duckdb")
     conn.execute(f"ATTACH '{bronze_path}' AS bronze (READ_ONLY)")
 
 
 def transform_customers(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     """
-    Transformations:
     - Cast customer_id to integer
     - Lowercase and strip whitespace from email
     - Cast signup_date to date
@@ -52,7 +42,6 @@ def transform_customers(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
 def transform_products(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     """
-    Transformations:
     - Cast product_id to integer
     - Cast price to decimal, take absolute value to fix negatives
     - Drop rows with null product_id
@@ -75,13 +64,11 @@ def transform_products(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
 def transform_orders(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     """
-    Transformations:
     - Cast order_id and customer_id to integer
-    - Cast order_date to date
-    - Cast total_amount to decimal
+    - Cast order_date to date, total_amount to decimal
     - Drop rows with null order_id
     - Drop rows whose customer_id was removed during customer cleaning
-    - Keep all statuses in silver (cancelled orders excluded at gold layer)
+    - Cancelled orders stay in silver; excluded at gold layer
     """
     df = conn.execute("""
         SELECT
@@ -100,9 +87,7 @@ def transform_orders(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
 def transform_order_items(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     """
-    Transformations:
-    - Cast all IDs to integer
-    - Cast unit_price to decimal
+    - Cast all IDs to integer, unit_price to decimal
     - Drop rows with null order_id or product_id
     - Drop rows with negative or zero quantity (bad data)
     - Drop rows whose order_id was removed during order cleaning
@@ -129,12 +114,8 @@ def transform_order_items(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
 def transform_returns(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     """
-    Transformations:
-    - Cast all IDs to integer
-    - Cast return_date to date
-    - Cast refund_amount to decimal
-    - Drop rows with null order_id
-    - Drop rows whose order_id was removed during order cleaning
+    - Cast all IDs to integer, return_date to date, refund_amount to decimal
+    - Drop rows with null order_id or order_id removed during order cleaning
     - Drop rows where return_date is before the linked order_date (temporal integrity)
     """
     df = conn.execute("""
@@ -154,7 +135,6 @@ def transform_returns(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
 
 def write_silver(conn: duckdb.DuckDBPyConnection, df: pd.DataFrame, table_name: str) -> None:
-    """Writes a dataframe to silver as both a DuckDB table and a CSV."""
     conn.execute(f"DROP TABLE IF EXISTS {table_name}")
     conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM df")
     df.to_csv(SILVER_DIR / f"{table_name}.csv", index=False)

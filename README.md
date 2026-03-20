@@ -5,8 +5,6 @@ moving synthetic order data through bronze, silver, and gold layers using DuckDB
 It includes automated data quality checks validated with pytest, and produces business-facing
 outputs on revenue, returns, and customer value.
 
-> Full pipeline runs in under 5 seconds on a local machine. No cloud infrastructure required.
-
 ---
 
 ## Architecture
@@ -34,10 +32,10 @@ Raw CSVs (Faker + NumPy)
 
 ## Key Features
 
-- **Medallion architecture** implemented in pure Python and DuckDB — no cloud dependencies
+- **Medallion architecture** in pure Python and DuckDB — no cloud dependencies
 - **Deliberate bad data injection** at generation time (~5% of records) so quality checks have real issues to catch
 - **63 pytest tests** across bronze, silver, gold, and quality check layers
-- **Business-ready outputs** answering four stakeholder questions from a single pipeline run
+- **CI** via GitHub Actions runs the test suite on every push
 
 ---
 
@@ -64,47 +62,41 @@ Results are written to `data/quality_report.csv`.
 ## Business Outputs
 
 ### Revenue by Region Over Time
-Which regions are growing and which are flat?
 
 ![Revenue by Region](notebooks/charts/revenue_by_region.png)
 
-West consistently leads revenue. North shows the flattest growth — a flag for regional strategy review.
+West leads revenue. North is flat — worth flagging for regional strategy.
 
 ---
 
 ### Return Rate by Product Category
-Which categories have a quality or expectation problem?
 
 ![Return Rate by Category](notebooks/charts/return_rate_by_category.png)
 
-Clothing leads at ~6.1%. Beauty is lowest — consistent with real-world patterns for consumable products.
+Clothing is highest (~6.1%). Beauty is lowest.
 
 ---
 
 ### Top 10 Products by Revenue with Return Rate
-Are our best-selling products also our most returned?
 
 ![Top Products](notebooks/charts/top_products.png)
 
-The top revenue product carries a ~9.6% return rate — well above the Electronics category average of ~5.8%.
-Red bars flag products with return rates above 8% that warrant a quality or listing review.
+Top revenue product has a 9.6% return rate. Red bars are above 8%.
 
 ---
 
 ### Customer Lifetime Value Segments
-Where is customer value concentrated?
 
 ![Customer Segments](notebooks/charts/customer_segments.png)
 
-High LTV customers generate 3x the lifetime value of Low LTV customers ($24k vs $8k).
-Retention spend should be weighted heavily toward the High and upper-Mid tiers.
+High LTV is roughly 3x Low. Retention budget should skew toward the top two tiers.
 
 ---
 
 ## How to Run
 
 ```bash
-git clone https://github.com/yourusername/ecommerce-order-pipeline
+git clone https://github.com/souravsudheer/ecommerce-order-pipeline
 cd ecommerce-order-pipeline
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
@@ -158,6 +150,7 @@ ecommerce-order-pipeline/
 │   └── charts/               # PNG outputs embedded in this README
 │
 ├── config.py                 # All paths and constants in one place
+├── pyproject.toml
 ├── requirements.txt
 └── README.md
 ```
@@ -176,14 +169,13 @@ ecommerce-order-pipeline/
 | pytest | 8.x | Industry-standard test framework |
 | matplotlib | 3.8+ | Clean business charts without heavy dependencies |
 
-DuckDB was chosen specifically because it runs in-process, supports full SQL, and is
-increasingly used in production data pipelines at companies that value simplicity over infrastructure.
+DuckDB runs in-process with full SQL support — no server needed.
 
 ---
 
 ## Data Model
 
-Five tables. Every column earns its place.
+Five tables across two fact-dimension relationships.
 
 ```
 customers     customer_id, name, email, region, signup_date
@@ -197,6 +189,5 @@ returns       return_id, order_id, return_date, reason, refund_amount
 
 ## Extensions
 
-Possible next steps if extending this project:
-migrate gold layer to dbt models, add GitHub Actions CI for automated pytest on push,
-or replace synthetic data with a real public e-commerce dataset.
+Possible next steps: migrate gold to dbt models, swap synthetic data for a real dataset
+(e.g. Kaggle's Brazilian e-commerce), or add a Streamlit dashboard over the gold CSVs.

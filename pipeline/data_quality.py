@@ -1,10 +1,3 @@
-"""
-data_quality.py
-Runtime data quality checks that run against the silver layer.
-Each check returns a QualityResult with check_name, passed, and
-failing_rows. Results are collected and written to quality_report.csv.
-"""
-
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -30,7 +23,7 @@ def get_silver_connection() -> duckdb.DuckDBPyConnection:
     return conn
 
 
-# ── Null checks ────────────────────────────────────────────────────────────────
+# Null checks
 
 def check_no_null_order_ids(conn: duckdb.DuckDBPyConnection) -> QualityResult:
     failing = conn.execute(
@@ -71,7 +64,7 @@ def check_no_null_product_ids(conn: duckdb.DuckDBPyConnection) -> QualityResult:
     )
 
 
-# ── Referential integrity checks ───────────────────────────────────────────────
+# Referential integrity
 
 def check_order_items_have_valid_orders(conn: duckdb.DuckDBPyConnection) -> QualityResult:
     failing = conn.execute("""
@@ -105,7 +98,7 @@ def check_returns_have_valid_orders(conn: duckdb.DuckDBPyConnection) -> QualityR
     )
 
 
-# ── Business logic checks ──────────────────────────────────────────────────────
+# Business logic
 
 def check_no_negative_quantities(conn: duckdb.DuckDBPyConnection) -> QualityResult:
     failing = conn.execute(
@@ -164,7 +157,7 @@ def check_valid_order_status(conn: duckdb.DuckDBPyConnection) -> QualityResult:
     )
 
 
-# ── Reconciliation check ───────────────────────────────────────────────────────
+# Reconciliation
 
 def check_order_total_matches_items(conn: duckdb.DuckDBPyConnection) -> QualityResult:
     """
@@ -194,8 +187,6 @@ def check_order_total_matches_items(conn: duckdb.DuckDBPyConnection) -> QualityR
         description="Order total_amount must match sum of order_items within 1%",
     )
 
-
-# ── Runner ─────────────────────────────────────────────────────────────────────
 
 ALL_CHECKS = [
     check_no_null_order_ids,

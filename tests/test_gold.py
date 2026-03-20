@@ -1,13 +1,3 @@
-"""
-test_gold.py
-Tests that gold aggregates produce valid, non-empty, business-correct outputs.
-Checks shape, value ranges, and business logic correctness.
-"""
-
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import pytest
 import duckdb
 from pipeline.gold import get_connection
@@ -15,16 +5,12 @@ from pipeline.gold import get_connection
 
 @pytest.fixture(scope="module")
 def gold_conn():
-    """
-    Module-scoped fixture: connects to the real gold.duckdb.
-    Assumes the full pipeline has already been run.
-    """
+    # Connects to the real gold.duckdb.
+    # Assumes the full pipeline has already been run.
     conn = get_connection()
     yield conn
     conn.close()
 
-
-# ── Table existence and non-empty ──────────────────────────────────────────────
 
 def test_gold_revenue_by_region_is_non_empty(gold_conn):
     count = gold_conn.execute(
@@ -53,8 +39,6 @@ def test_gold_customer_segments_is_non_empty(gold_conn):
     ).fetchone()[0]
     assert count > 0, "gold_customer_segments must not be empty"
 
-
-# ── Shape checks ───────────────────────────────────────────────────────────────
 
 def test_gold_return_rate_has_exactly_four_categories(gold_conn):
     count = gold_conn.execute(
@@ -89,8 +73,6 @@ def test_gold_customer_segments_has_three_tiers(gold_conn):
     assert segments == {"High", "Mid", "Low"}, \
         f"Expected High/Mid/Low segments, got {segments}"
 
-
-# ── Value range checks ─────────────────────────────────────────────────────────
 
 def test_gold_revenue_is_always_positive(gold_conn):
     bad = gold_conn.execute(
@@ -129,8 +111,6 @@ def test_gold_customer_total_orders_is_at_least_one(gold_conn):
     assert bad == 0, "Every customer in gold must have at least one order"
 
 
-# ── Business logic checks ──────────────────────────────────────────────────────
-
 def test_gold_top_products_ordered_by_revenue_descending(gold_conn):
     revenues = gold_conn.execute(
         "SELECT total_revenue FROM gold_top_products"
@@ -157,11 +137,8 @@ def test_gold_revenue_by_region_total_orders_is_positive(gold_conn):
 
 
 def test_gold_cancelled_orders_excluded_from_revenue(gold_conn):
-    """
-    Revenue in gold should be less than if cancelled orders were included.
-    We verify this by checking total_revenue is a reasonable positive number
-    and no region-month combination has suspiciously zero revenue.
-    """
+    # Revenue in gold should exclude cancelled orders.
+    # If any region-month has zero revenue, cancelled orders likely leaked in.
     zero_revenue = gold_conn.execute(
         "SELECT COUNT(*) FROM gold_revenue_by_region WHERE total_revenue = 0"
     ).fetchone()[0]

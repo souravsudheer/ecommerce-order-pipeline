@@ -1,15 +1,3 @@
-"""
-test_quality.py
-Tests for data_quality.py check functions.
-Each test creates a minimal in-memory table with known bad data,
-runs the quality check against it, and asserts the check catches
-exactly what it should. This proves the checks work, not just that they ran.
-"""
-
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import pytest
 import duckdb
 from pipeline.data_quality import (
@@ -26,7 +14,7 @@ from pipeline.data_quality import (
 )
 
 
-# ── Null checks ────────────────────────────────────────────────────────────────
+# Null checks
 
 def test_null_order_ids_are_caught(mem_conn):
     mem_conn.execute("""
@@ -80,7 +68,7 @@ def test_null_product_ids_are_caught(mem_conn):
     assert result.failing_rows == 1
 
 
-# ── Referential integrity checks ───────────────────────────────────────────────
+# Referential integrity
 
 def test_orphaned_order_items_are_caught(mem_conn):
     mem_conn.execute("""
@@ -120,7 +108,7 @@ def test_orphaned_returns_are_caught(mem_conn):
     assert result.failing_rows == 1
 
 
-# ── Business logic checks ──────────────────────────────────────────────────────
+# Business logic
 
 def test_negative_quantities_are_caught(mem_conn):
     mem_conn.execute("""
@@ -216,7 +204,7 @@ def test_invalid_order_status_is_caught(mem_conn):
     assert result.failing_rows == 1
 
 
-# ── Reconciliation check ───────────────────────────────────────────────────────
+# Reconciliation
 
 def test_order_total_mismatch_beyond_tolerance_is_caught(mem_conn):
     """Order total that differs by more than 1% from item sum is flagged."""

@@ -1,14 +1,3 @@
-"""
-test_silver.py
-Tests that silver transformations produce trusted, typed, clean data.
-Checks that bad data from bronze has been removed, types are correct,
-and derived columns are calculated properly.
-"""
-
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import pytest
 import duckdb
 from pipeline.silver import get_connection
@@ -16,16 +5,12 @@ from pipeline.silver import get_connection
 
 @pytest.fixture(scope="module")
 def silver_conn():
-    """
-    Module-scoped fixture: connects to the real silver.duckdb.
-    Assumes bronze.py and silver.py have already been run.
-    """
+    # Connects to the real silver.duckdb.
+    # Assumes bronze.py and silver.py have already been run.
     conn = get_connection()
     yield conn
     conn.close()
 
-
-# ── Null removal ───────────────────────────────────────────────────────────────
 
 def test_silver_customers_has_no_null_ids(silver_conn):
     nulls = silver_conn.execute(
@@ -54,8 +39,6 @@ def test_silver_customers_emails_are_lowercase(silver_conn):
     ).fetchone()[0]
     assert mixed == 0, "Silver customer emails must all be lowercase"
 
-
-# ── Bad data removal ───────────────────────────────────────────────────────────
 
 def test_silver_order_items_has_no_negative_quantities(silver_conn):
     negs = silver_conn.execute(
@@ -88,8 +71,6 @@ def test_silver_returns_date_always_after_order_date(silver_conn):
     assert bad == 0, "All return dates must be after their linked order date"
 
 
-# ── Row count expectations ─────────────────────────────────────────────────────
-
 def test_silver_has_fewer_customers_than_bronze(silver_conn):
     """Silver drops ~5% of customer rows due to null IDs and bad emails."""
     count = silver_conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
@@ -111,8 +92,6 @@ def test_silver_products_flags_corrected_prices(silver_conn):
     assert flagged > 0, "Some products should be flagged as having had negative prices"
 
 
-# ── Derived column checks ──────────────────────────────────────────────────────
-
 def test_silver_order_items_line_total_is_correct(silver_conn):
     """line_total must equal quantity * unit_price for all rows."""
     mismatched = silver_conn.execute("""
@@ -129,8 +108,6 @@ def test_silver_order_items_line_total_is_positive(silver_conn):
     ).fetchone()[0]
     assert bad == 0, "All line_total values must be positive"
 
-
-# ── Referential integrity ──────────────────────────────────────────────────────
 
 def test_silver_all_orders_have_valid_customers(silver_conn):
     orphans = silver_conn.execute("""
@@ -151,8 +128,6 @@ def test_silver_all_order_items_have_valid_orders(silver_conn):
     """).fetchone()[0]
     assert orphans == 0, "All order_items must link to a valid order in silver"
 
-
-# ── Value range checks ─────────────────────────────────────────────────────────
 
 def test_silver_products_categories_are_valid(silver_conn):
     valid = {"Electronics", "Clothing", "Home", "Beauty"}

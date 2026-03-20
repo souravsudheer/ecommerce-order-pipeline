@@ -1,10 +1,3 @@
-"""
-run_all.py
-Single entry point for the full e-commerce order pipeline.
-Runs all stages in order: generate -> bronze -> silver -> gold -> quality checks.
-Usage: python pipeline/run_all.py
-"""
-
 import sys
 import time
 from pathlib import Path

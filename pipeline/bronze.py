@@ -1,10 +1,3 @@
-"""
-bronze.py
-Loads all five raw CSVs into DuckDB as-is. Zero transformation.
-Bronze is the immutable landing zone — if something goes wrong
-downstream, you can always reprocess from here.
-"""
-
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -16,7 +9,6 @@ TABLES = ["customers", "products", "orders", "order_items", "returns"]
 
 
 def get_connection() -> duckdb.DuckDBPyConnection:
-    """Returns a DuckDB connection to the bronze database."""
     BRONZE_DIR.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(str(BRONZE_DIR / "bronze.duckdb"))
 
@@ -43,10 +35,8 @@ def load_raw_to_bronze(conn: duckdb.DuckDBPyConnection) -> None:
 
 
 def validate_bronze(conn: duckdb.DuckDBPyConnection) -> None:
-    """
-    Minimal sanity checks on bronze — not quality checks,
-    just confirming all tables exist and are non-empty.
-    """
+    # Minimal sanity checks — not quality checks, just confirming
+    # all tables exist and are non-empty before downstream runs.
     print("\nValidating bronze layer...")
     all_ok = True
     for table in TABLES:

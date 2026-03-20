@@ -1,14 +1,3 @@
-"""
-test_bronze.py
-Tests that the bronze layer loads raw CSVs correctly.
-Checks expected tables exist, row counts are non-zero,
-expected columns are present, and bad data is preserved as-is.
-"""
-
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import pytest
 import duckdb
 from pipeline.bronze import get_connection, load_raw_to_bronze, TABLES
@@ -16,16 +5,12 @@ from pipeline.bronze import get_connection, load_raw_to_bronze, TABLES
 
 @pytest.fixture(scope="module")
 def bronze_conn():
-    """
-    Module-scoped fixture: connects to the real bronze.duckdb.
-    Assumes generate_data.py and bronze.py have already been run.
-    """
+    # Connects to the real bronze.duckdb.
+    # Assumes generate_data.py and bronze.py have already been run.
     conn = get_connection()
     yield conn
     conn.close()
 
-
-# ── Table existence and structure ──────────────────────────────────────────────
 
 def test_all_tables_exist(bronze_conn):
     existing = bronze_conn.execute(
@@ -69,8 +54,6 @@ def test_returns_has_expected_columns(bronze_conn):
         assert col in cols, f"Missing column '{col}' in bronze.returns"
 
 
-# ── Row count expectations ─────────────────────────────────────────────────────
-
 def test_customers_row_count(bronze_conn):
     count = bronze_conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
     assert count == 1000, f"Expected 1000 customers, got {count}"
@@ -91,8 +74,6 @@ def test_order_items_has_more_rows_than_orders(bronze_conn):
     items = bronze_conn.execute("SELECT COUNT(*) FROM order_items").fetchone()[0]
     assert items > orders, "order_items should have more rows than orders"
 
-
-# ── Bad data preserved in bronze ───────────────────────────────────────────────
 
 def test_bronze_preserves_null_order_ids(bronze_conn):
     """Bronze must NOT clean data — nulls should still be present."""
@@ -117,8 +98,6 @@ def test_bronze_preserves_early_return_dates(bronze_conn):
     ).fetchone()[0]
     assert bad > 0, "Bronze should preserve early return dates from raw data"
 
-
-# ── Region and status values ───────────────────────────────────────────────────
 
 def test_customers_have_valid_regions(bronze_conn):
     valid_regions = {"North", "South", "East", "West"}

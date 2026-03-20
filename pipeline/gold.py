@@ -1,10 +1,3 @@
-"""
-gold.py
-Builds four business-ready aggregate tables from the silver layer.
-Each table answers a specific business question and is written as
-both a DuckDB table and a CSV for downstream notebook consumption.
-"""
-
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -15,23 +8,17 @@ from config import SILVER_DIR, GOLD_DIR
 
 
 def get_connection() -> duckdb.DuckDBPyConnection:
-    """Returns a DuckDB connection to the gold database."""
     GOLD_DIR.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(str(GOLD_DIR / "gold.duckdb"))
 
 
 def attach_silver(conn: duckdb.DuckDBPyConnection) -> None:
-    """Attaches the silver database so gold can read from it."""
     silver_path = str(SILVER_DIR / "silver.duckdb")
     conn.execute(f"ATTACH '{silver_path}' AS silver (READ_ONLY)")
 
 
 def build_revenue_by_region(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    Business question: Which regions are growing and which are flat?
-    Grain: one row per region per month.
-    Excludes cancelled orders from revenue.
-    """
+    # Grain: one row per region per month. Excludes cancelled orders.
     df = conn.execute("""
         SELECT
             c.region,
@@ -51,11 +38,8 @@ def build_revenue_by_region(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
 
 def build_return_rate_by_category(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    Business question: Which product categories have a quality or expectation problem?
-    Grain: one row per category.
-    Return rate = returned order_items / total order_items sold per category.
-    """
+    # Grain: one row per category.
+    # Return rate = returned order_items / total order_items sold per category.
     df = conn.execute("""
         WITH category_sales AS (
             SELECT
@@ -102,10 +86,7 @@ def build_return_rate_by_category(conn: duckdb.DuckDBPyConnection) -> pd.DataFra
 
 
 def build_top_products(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    Business question: Are our best-selling products also our most returned?
-    Grain: one row per product, top 10 by revenue.
-    """
+    # Grain: one row per product, top 10 by revenue.
     df = conn.execute("""
         WITH product_sales AS (
             SELECT
@@ -153,11 +134,8 @@ def build_top_products(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
 
 def build_customer_segments(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
-    """
-    Business question: Where is our customer value concentrated?
-    Grain: one row per customer with their LTV segment (High / Mid / Low).
-    Segmentation based on tertiles of lifetime revenue.
-    """
+    # Grain: one row per customer with their LTV segment (High / Mid / Low).
+    # Segmentation based on tertiles of lifetime revenue.
     df = conn.execute("""
         WITH customer_ltv AS (
             SELECT
@@ -201,7 +179,6 @@ def build_customer_segments(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
 
 def write_gold(conn: duckdb.DuckDBPyConnection, df: pd.DataFrame, table_name: str) -> None:
-    """Writes a dataframe to gold as both a DuckDB table and a CSV."""
     conn.execute(f"DROP TABLE IF EXISTS {table_name}")
     conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM df")
     df.to_csv(GOLD_DIR / f"{table_name}.csv", index=False)
